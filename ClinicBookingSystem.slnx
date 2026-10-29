@@ -1,0 +1,38 @@
+<Solution>
+  <Folder Name="/.github/" />
+  <Folder Name="/.github/workflows/" />
+  <Folder Name="/deploy/" />
+  <Folder Name="/deploy/docker/" />
+  <Folder Name="/docs/" />
+  <Folder Name="/docs/architecture/" />
+  <Folder Name="/src/" />
+  <Folder Name="/src/Api/" />
+  <Folder Name="/src/Modules/" />
+  <Folder Name="/src/Modules/Appointments/">
+    <Project Path="ClinicBookingSystem.Appointments.Application/ClinicBookingSystem.Appointments.Application.csproj" />
+    <Project Path="ClinicBookingSystem.Appointments.Domain/ClinicBookingSystem.Appointments.Domain.csproj" />
+    <Project Path="ClinicBookingSystem.Appointments.Persistence/ClinicBookingSystem.Appointments.Persistence.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Clinics/">
+    <Project Path="ClinicBookingSystem.Clinics.Application/ClinicBookingSystem.Clinics.Application.csproj" />
+    <Project Path="ClinicBookingSystem.Clinics.Domain/ClinicBookingSystem.Clinics.Domain.csproj" />
+    <Project Path="ClinicBookingSystem.Clinics.Persistence/ClinicBookingSystem.Clinics.Persistence.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Patients/">
+    <Project Path="ClinicBookingSystem.Patients.Application/ClinicBookingSystem.Patients.Application.csproj" />
+    <Project Path="ClinicBookingSystem.Patients.Domain/ClinicBookingSystem.Patients.Domain.csproj" />
+    <Project Path="ClinicBookingSystem.Patients.Persistence/ClinicBookingSystem.Patients.Persistence.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/TimeSlots/">
+    <Project Path="ClinicBookingSystem.TimeSlots.Application/ClinicBookingSystem.TimeSlots.Application.csproj" />
+    <Project Path="ClinicBookingSystem.TimeSlots.Domain/ClinicBookingSystem.TimeSlots.Domain.csproj" />
+    <Project Path="ClinicBookingSystem.TimeSlots.Persistence/ClinicBookingSystem.TimeSlots.Persistence.csproj" />
+  </Folder>
+  <Folder Name="/src/Presentation/">
+    <Project Path="ClinicBookingSystem.BlazorWasm/ClinicBookingSystem.BlazorWasm.csproj" />
+  </Folder>
+  <Folder Name="/tests/" />
+  <Folder Name="/tests/E2ETests/" />
+  <Folder Name="/tests/IntegrationTests/" />
+  <Folder Name="/tests/UnitTests/" />
+</Solution>
