@@ -1,0 +1,105 @@
+@inject IClinicApi Api
+
+@* Lets the user choose a clinic-day and one available slot; reused by booking and rescheduling. *@
+<MudGrid>
+    <MudItem xs="12" md="6">
+        <MudSelect T="Guid?" Label="Clinic" Value="_clinicId" ValueChanged="OnClinicChanged" Required="true"
+                   Disabled="@(LockedClinicId is not null)" data-testid="clinic-select">
+            @foreach (var clinic in _clinics)
+            {
+                <MudSelectItem T="Guid?" Value="@clinic.Id">@clinic.Name — @clinic.Address</MudSelectItem>
+            }
+        </MudSelect>
+    </MudItem>
+    <MudItem xs="12" md="6">
+        <MudDatePicker Label="Date" Date="_date" DateChanged="OnDateChanged" MinDate="DateTime.Today"
+                       Required="true" data-testid="date-picker" />
+    </MudItem>
+</MudGrid>
+
+@if (_loading)
+{
+    <MudProgressLinear Indeterminate="true" Class="my-4" />
+}
+else if (_slots is not null)
+{
+    @if (_slots.Count == 0)
+    {
+        <MudAlert Severity="Severity.Info" Class="my-4" data-testid="no-slots">No available time slots for this day. Try another date.</MudAlert>
+    }
+    else
+    {
+        <MudText Typo="Typo.subtitle1" Class="mt-4 mb-2">Available time slots</MudText>
+        <div class="d-flex flex-wrap gap-2" data-testid="slot-list">
+            @foreach (var slot in _slots)
+            {
+                var start = ClinicTime.ToClinicTime(slot.StartsAt);
+                <MudButton Variant="@(slot.Id == SelectedSlotId ? Variant.Filled : Variant.Outlined)" Color="Color.Primary"
+                           OnClick="() => Select(slot)" data-testid="slot">@start.ToString("HH:mm")</MudButton>
+            }
+        </div>
+    }
+}
+
+@if (_error is not null)
+{
+    <MudAlert Severity="Severity.Error" Class="my-4" data-testid="slot-error">@_error</MudAlert>
+}
+
+@code {
+    private List<ClinicDto> _clinics = [];
+    private IReadOnlyList<TimeSlotDto>? _slots;
+    private Guid? _clinicId;
+    private DateTime? _date = DateTime.Today.AddDays(1);
+    private bool _loading;
+    private string? _error;
+
+    /// <summary>When set, the clinic cannot be changed (rescheduling stays within one clinic).</summary>
+    [Parameter] public Guid? LockedClinicId { get; set; }
+    [Parameter] public Guid? SelectedSlotId { get; set; }
+    [Parameter] public EventCallback<TimeSlotDto?> SelectedSlotChanged { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await Api.GetClinicsAsync();
+        _error = result.Error;
+        _clinics = result.Value?.ToList() ?? [];
+        _clinicId = LockedClinicId;
+        await LoadSlots();
+    }
+
+    private async Task OnClinicChanged(Guid? id)
+    {
+        _clinicId = id;
+        await LoadSlots();
+    }
+
+    private async Task OnDateChanged(DateTime? date)
+    {
+        _date = date;
+        await LoadSlots();
+    }
+
+    private async Task Select(TimeSlotDto slot)
+    {
+        SelectedSlotId = slot.Id;
+        await SelectedSlotChanged.InvokeAsync(slot);
+    }
+
+    private async Task LoadSlots()
+    {
+        _slots = null;
+        if (SelectedSlotId is not null)
+        {
+            SelectedSlotId = null;
+            await SelectedSlotChanged.InvokeAsync(null);
+        }
+        if (_clinicId is null || _date is null) return;
+
+        _loading = true;
+        var result = await Api.GetTimeSlotsAsync(_clinicId.Value, DateOnly.FromDateTime(_date.Value));
+        _loading = false;
+        _error = result.Error;
+        _slots = result.Value;
+    }
+}

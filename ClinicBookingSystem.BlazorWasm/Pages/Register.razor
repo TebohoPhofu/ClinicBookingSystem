@@ -1,0 +1,52 @@
+@page "/register"
+@inject IClinicApi Api
+@inject JwtAuthStateProvider Auth
+@inject NavigationManager Navigation
+@inject FormValidator<RegisterRequest> Validator
+
+<PageTitle>Register</PageTitle>
+
+<MudPaper Class="pa-6 mx-auto" MaxWidth="560px">
+    <MudText Typo="Typo.h5" GutterBottom="true">Create your patient account</MudText>
+    <MudForm Model="_model" @ref="_form" Validation="Validator.ValidateValue">
+        <MudTextField @bind-Value="_model.FirstName" For="() => _model.FirstName" Label="First name" Immediate="true" data-testid="reg-first-name" />
+        <MudTextField @bind-Value="_model.LastName" For="() => _model.LastName" Label="Last name" Immediate="true" data-testid="reg-last-name" />
+        <MudTextField @bind-Value="_model.Email" For="() => _model.Email" Label="Email" InputType="InputType.Email" Immediate="true" data-testid="reg-email" />
+        <MudTextField @bind-Value="_model.PhoneNumber" For="() => _model.PhoneNumber" Label="Phone number" Immediate="true" data-testid="reg-phone" />
+        <MudDatePicker @bind-Date="_model.DateOfBirth" For="() => _model.DateOfBirth" Label="Date of birth" MaxDate="DateTime.Today.AddDays(-1)"
+                       OpenTo="OpenTo.Year" data-testid="reg-dob" />
+        <MudTextField @bind-Value="_model.Password" For="() => _model.Password" Label="Password" InputType="InputType.Password"
+                      Immediate="true" HelperText="At least 8 characters, with an uppercase letter and a digit." data-testid="reg-password" />
+    </MudForm>
+
+    @if (_error is not null)
+    {
+        <MudAlert Severity="Severity.Error" Class="mt-3" data-testid="register-error">@_error</MudAlert>
+    }
+
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Class="mt-4" Disabled="_busy"
+               OnClick="SubmitAsync" data-testid="register-submit">Register</MudButton>
+</MudPaper>
+
+@code {
+    private readonly RegisterRequest _model = new();
+    private MudForm _form = default!;
+    private string? _error;
+    private bool _busy;
+
+    private async Task SubmitAsync()
+    {
+        await _form.ValidateAsync();
+        if (!await Validator.IsValidAsync(_model)) return;
+
+        _busy = true;
+        _error = null;
+        var result = await Api.RegisterAsync(_model);
+        _busy = false;
+
+        if (!result.IsSuccess) { _error = result.Error; return; }
+
+        await Auth.SignInAsync(result.Value!);
+        Navigation.NavigateTo("book");
+    }
+}

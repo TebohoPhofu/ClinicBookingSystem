@@ -1,0 +1,42 @@
+<Project>
+
+  <PropertyGroup>
+	<TargetFramework>net10.0</TargetFramework>
+	<Nullable>enable</Nullable>
+	<ImplicitUsings>enable</ImplicitUsings>
+	<LangVersion>latest</LangVersion>
+	<TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <!-- Module name of per-module projects, e.g. "Appointments" for ClinicBookingSystem.Appointments.Domain. -->
+  <PropertyGroup>
+	<ModuleName>$([System.Text.RegularExpressions.Regex]::Match($(MSBuildProjectName), '^ClinicBookingSystem\.([^.]+)\.(Domain|Application|Persistence)$').Groups[1].Value)</ModuleName>
+  </PropertyGroup>
+
+  <!-- Layer rules: Domain <- Application <- Persistence. Versions come from Directory.Packages.props. -->
+  <ItemGroup Condition="$(MSBuildProjectName.EndsWith('.Domain')) And '$(ModuleName)' != ''">
+	<ProjectReference Include="$(MSBuildThisFileDirectory)ClinicBookingSystem.SharedKernel\ClinicBookingSystem.SharedKernel.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="$(MSBuildProjectName.EndsWith('.Application')) And '$(ModuleName)' != ''">
+	<PackageReference Include="Mediator.Abstractions" />
+	<PackageReference Include="FluentValidation" />
+	<Using Include="Mediator" />
+	<ProjectReference Include="$(MSBuildThisFileDirectory)ClinicBookingSystem.$(ModuleName).Domain\ClinicBookingSystem.$(ModuleName).Domain.csproj" />
+	<ProjectReference Include="$(MSBuildThisFileDirectory)ClinicBookingSystem.SharedKernel\ClinicBookingSystem.SharedKernel.csproj" />
+	<ProjectReference Include="$(MSBuildThisFileDirectory)ClinicBookingSystem.Contracts\ClinicBookingSystem.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="$(MSBuildProjectName.EndsWith('.Persistence')) And '$(ModuleName)' != ''">
+	<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
+	<ProjectReference Include="$(MSBuildThisFileDirectory)ClinicBookingSystem.$(ModuleName).Application\ClinicBookingSystem.$(ModuleName).Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="$(MSBuildProjectName.EndsWith('Tests'))">
+	<PackageReference Include="xunit.v3" />
+	<PackageReference Include="Shouldly" />
+	<Using Include="Xunit" />
+	<Using Include="Shouldly" />
+  </ItemGroup>
+
+</Project>

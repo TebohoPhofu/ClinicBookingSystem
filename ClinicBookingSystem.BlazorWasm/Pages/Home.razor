@@ -1,7 +1,21 @@
 ﻿@page "/"
 
-<PageTitle>Home</PageTitle>
+<PageTitle>PHCIS Clinic Booking</PageTitle>
 
-<h1>Hello, world!</h1>
+<MudText Typo="Typo.h3" GutterBottom="true">Book your clinic visit</MudText>
+<MudText Class="mb-6">Find an available time slot at a clinic near you and receive an instant confirmation.</MudText>
 
-Welcome to your new app.
+<AuthorizeView>
+    <Authorized>
+        <AuthorizeView Roles="@Roles.Patient" Context="patient">
+            <MudButton Href="book" Variant="Variant.Filled" Color="Color.Primary" data-testid="home-book">Book an appointment</MudButton>
+        </AuthorizeView>
+        <AuthorizeView Roles="@($"{Roles.Admin},{Roles.ClinicStaff}")" Context="staff">
+            <MudButton Href="manage" Variant="Variant.Filled" Color="Color.Primary" data-testid="home-manage">Manage clinics and time slots</MudButton>
+        </AuthorizeView>
+    </Authorized>
+    <NotAuthorized>
+        <MudButton Href="login" Variant="Variant.Filled" Color="Color.Primary" Class="mr-2">Sign in</MudButton>
+        <MudButton Href="register" Variant="Variant.Outlined" Color="Color.Primary">Create an account</MudButton>
+    </NotAuthorized>
+</AuthorizeView>

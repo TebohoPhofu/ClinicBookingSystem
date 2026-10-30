@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NSubstitute" />
+    <ProjectReference Include="..\ClinicBookingSystem.Patients.Application\ClinicBookingSystem.Patients.Application.csproj" />
+    <ProjectReference Include="..\ClinicBookingSystem.Clinics.Application\ClinicBookingSystem.Clinics.Application.csproj" />
+    <ProjectReference Include="..\ClinicBookingSystem.TimeSlots.Application\ClinicBookingSystem.TimeSlots.Application.csproj" />
+    <ProjectReference Include="..\ClinicBookingSystem.Appointments.Application\ClinicBookingSystem.Appointments.Application.csproj" />
+  </ItemGroup>
+
+</Project>

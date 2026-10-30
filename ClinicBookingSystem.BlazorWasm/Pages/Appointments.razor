@@ -1,0 +1,96 @@
+@page "/appointments"
+@attribute [Authorize(Roles = Roles.Patient)]
+@inject IClinicApi Api
+@inject IDialogService Dialogs
+@inject ISnackbar Snackbar
+
+<PageTitle>My appointments</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">My appointments</MudText>
+
+@if (_message is not null)
+{
+    <ConfirmationBanner Message="@_message" />
+}
+@if (_error is not null)
+{
+    <MudAlert Severity="Severity.Error" Class="mb-3" data-testid="appointments-error">@_error</MudAlert>
+}
+
+@if (_appointments is null)
+{
+    <MudProgressLinear Indeterminate="true" />
+}
+else if (_appointments.Count == 0)
+{
+    <MudAlert Severity="Severity.Info" data-testid="no-appointments">You have no appointments yet.</MudAlert>
+}
+else
+{
+    <MudTable Items="_appointments" Hover="true" data-testid="appointments-table">
+        <HeaderContent>
+            <MudTh>Clinic</MudTh>
+            <MudTh>When</MudTh>
+            <MudTh>Status</MudTh>
+            <MudTh>Confirmation</MudTh>
+            <MudTh></MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.ClinicName</MudTd>
+            <MudTd>@ClinicTime.ToClinicTime(context.StartsAt).ToString("ddd, d MMM yyyy HH:mm")</MudTd>
+            <MudTd><MudChip T="string" Size="Size.Small" Color="@(context.Status == "Confirmed" ? Color.Success : Color.Default)">@context.Status</MudChip></MudTd>
+            <MudTd>@context.ConfirmationNumber</MudTd>
+            <MudTd>
+                @if (context.Status == "Confirmed" && context.StartsAt > DateTimeOffset.UtcNow)
+                {
+                    <MudButton Size="Size.Small" OnClick="() => RescheduleAsync(context)" data-testid="reschedule">Reschedule</MudButton>
+                    <MudButton Size="Size.Small" Color="Color.Error" OnClick="() => CancelAsync(context)" data-testid="cancel">Cancel</MudButton>
+                }
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+}
+
+@code {
+    private IReadOnlyList<AppointmentDto>? _appointments;
+    private string? _message;
+    private string? _error;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        var result = await Api.GetMyAppointmentsAsync();
+        _error = result.Error;
+        _appointments = result.Value ?? [];
+    }
+
+    private async Task CancelAsync(AppointmentDto appointment)
+    {
+        var confirmed = await Dialogs.ShowMessageBoxAsync("Cancel appointment",
+            $"Cancel your appointment at {appointment.ClinicName} on {ClinicTime.ToClinicTime(appointment.StartsAt):d MMM yyyy HH:mm}?",
+            yesText: "Cancel appointment", cancelText: "Keep it");
+        if (confirmed != true) return;
+
+        var result = await Api.CancelAsync(appointment.Id);
+        _message = null;
+        _error = result.Error;
+        if (result.IsSuccess) Snackbar.Add("Appointment cancelled", Severity.Info);
+        await LoadAsync();
+    }
+
+    private async Task RescheduleAsync(AppointmentDto appointment)
+    {
+        var parameters = new DialogParameters<RescheduleDialog> { { x => x.Appointment, appointment } };
+        var dialog = await Dialogs.ShowAsync<RescheduleDialog>("Reschedule appointment", parameters,
+            new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true });
+        var outcome = await dialog.Result;
+
+        if (outcome is { Canceled: false, Data: AppointmentConfirmationDto confirmation })
+        {
+            _error = null;
+            _message = confirmation.Message;
+            await LoadAsync();
+        }
+    }
+}

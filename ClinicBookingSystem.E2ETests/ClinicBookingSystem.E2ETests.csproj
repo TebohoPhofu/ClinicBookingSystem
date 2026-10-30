@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Browser tests against the running system. Start the API (http://localhost:5100) and the Blazor app
+    (http://localhost:5271) first, install browsers once with: pwsh bin/Debug/net10.0/playwright.ps1 install chromium
+    URLs can be overridden with the E2E_WEB_URL environment variable.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Playwright.Xunit.v3" />
+    <ProjectReference Include="..\ClinicBookingSystem.Contracts\ClinicBookingSystem.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>

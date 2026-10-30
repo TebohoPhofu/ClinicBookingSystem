@@ -1,0 +1,39 @@
+@inject IClinicApi Api
+
+<MudDialog>
+    <DialogContent>
+        <MudText Class="mb-3">Currently at <b>@Appointment.ClinicName</b>, @ClinicTime.ToClinicTime(Appointment.StartsAt).ToString("ddd, d MMM yyyy HH:mm").</MudText>
+        <SlotPicker LockedClinicId="Appointment.ClinicId" SelectedSlotId="_selected?.Id"
+                    SelectedSlotChanged="s => { _selected = s; _error = null; }" />
+        @if (_error is not null)
+        {
+            <MudAlert Severity="Severity.Error" Class="mt-3" data-testid="reschedule-error">@_error</MudAlert>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => MudDialog.Cancel()">Close</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" Disabled="@(_selected is null || _busy)"
+                   OnClick="ConfirmAsync" data-testid="reschedule-confirm">Confirm new time</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private TimeSlotDto? _selected;
+    private string? _error;
+    private bool _busy;
+
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter, EditorRequired] public AppointmentDto Appointment { get; set; } = default!;
+
+    private async Task ConfirmAsync()
+    {
+        if (_selected is null) return;
+
+        _busy = true;
+        var result = await Api.RescheduleAsync(Appointment.Id, _selected.Id);
+        _busy = false;
+
+        if (result.IsSuccess) MudDialog.Close(DialogResult.Ok(result.Value!));
+        else _error = result.Error;
+    }
+}

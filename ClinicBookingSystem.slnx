@@ -1,13 +1,39 @@
 <Solution>
   <Folder Name="/.github/" />
-  <Folder Name="/.github/workflows/" />
+  <Folder Name="/.github/workflows/">
+    <File Path=".github/workflows/ci.yaml" />
+    <File Path=".github/workflows/e2e.yaml" />
+  </Folder>
   <Folder Name="/deploy/" />
-  <Folder Name="/deploy/docker/" />
+  <Folder Name="/deploy/docker/">
+    <File Path="deploy/docker/docker-compose.yml" />
+    <File Path="deploy/docker/Dockerfile.api" />
+    <File Path="deploy/docker/Dockerfile.web" />
+    <File Path="deploy/docker/nginx.conf" />
+  </Folder>
   <Folder Name="/docs/" />
-  <Folder Name="/docs/architecture/" />
+  <Folder Name="/docs/architecture/">
+    <File Path="docs/architecture/architecture.md" />
+    <File Path="docs/architecture/requirements.md" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path=".dockerignore" />
+    <File Path=".gitattributes" />
+    <File Path=".gitignore" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="dotnet-tools.json" />
+    <File Path="global.json" />
+    <File Path="README.md" />
+  </Folder>
   <Folder Name="/src/" />
-  <Folder Name="/src/Api/" />
-  <Folder Name="/src/Modules/" />
+  <Folder Name="/src/Api/">
+    <Project Path="ClinicBookingSystem.Api/ClinicBookingSystem.Api.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/">
+    <Project Path="ClinicBookingSystem.Contracts/ClinicBookingSystem.Contracts.csproj" />
+    <Project Path="ClinicBookingSystem.SharedKernel/ClinicBookingSystem.SharedKernel.csproj" />
+  </Folder>
   <Folder Name="/src/Modules/Appointments/">
     <Project Path="ClinicBookingSystem.Appointments.Application/ClinicBookingSystem.Appointments.Application.csproj" />
     <Project Path="ClinicBookingSystem.Appointments.Domain/ClinicBookingSystem.Appointments.Domain.csproj" />
@@ -32,7 +58,13 @@
     <Project Path="ClinicBookingSystem.BlazorWasm/ClinicBookingSystem.BlazorWasm.csproj" />
   </Folder>
   <Folder Name="/tests/" />
-  <Folder Name="/tests/E2ETests/" />
-  <Folder Name="/tests/IntegrationTests/" />
-  <Folder Name="/tests/UnitTests/" />
+  <Folder Name="/tests/E2ETests/">
+    <Project Path="ClinicBookingSystem.E2ETests/ClinicBookingSystem.E2ETests.csproj" />
+  </Folder>
+  <Folder Name="/tests/IntegrationTests/">
+    <Project Path="ClinicBookingSystem.IntegrationTests/ClinicBookingSystem.IntegrationTests.csproj" />
+  </Folder>
+  <Folder Name="/tests/UnitTests/">
+    <Project Path="ClinicBookingSystem.UnitTests/ClinicBookingSystem.UnitTests.csproj" />
+  </Folder>
 </Solution>

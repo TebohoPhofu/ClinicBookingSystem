@@ -1,0 +1,11 @@
+**/bin/
+**/obj/
+**/logs/
+**/.vs/
+**/*.user
+.git/
+.github/
+TestResults/
+ClinicBookingSystem.UnitTests/
+ClinicBookingSystem.IntegrationTests/
+ClinicBookingSystem.E2ETests/

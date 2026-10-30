@@ -1,16 +1,46 @@
 ﻿@inherits LayoutComponentBase
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
+@inject JwtAuthStateProvider Auth
+@inject NavigationManager Navigation
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
+<MudThemeProvider />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
 
-        <article class="content px-4">
+<MudLayout>
+    <MudAppBar Elevation="1" Color="Color.Primary">
+        <MudIcon Icon="@Icons.Material.Filled.LocalHospital" Class="mr-2" />
+        <MudText Typo="Typo.h6">PHCIS Clinic Booking</MudText>
+        <MudSpacer />
+        <AuthorizeView>
+            <Authorized>
+                <AuthorizeView Roles="@Roles.Patient" Context="patient">
+                    <MudButton Href="book" Color="Color.Inherit" data-testid="nav-book">Book</MudButton>
+                    <MudButton Href="appointments" Color="Color.Inherit" data-testid="nav-appointments">My appointments</MudButton>
+                </AuthorizeView>
+                <AuthorizeView Roles="@($"{Roles.Admin},{Roles.ClinicStaff}")" Context="staff">
+                    <MudButton Href="manage" Color="Color.Inherit" data-testid="nav-manage">Manage clinics</MudButton>
+                </AuthorizeView>
+                <MudText Class="mx-3" data-testid="user-name">@context.User.Identity?.Name</MudText>
+                <MudButton Color="Color.Inherit" OnClick="SignOut" data-testid="nav-logout">Sign out</MudButton>
+            </Authorized>
+            <NotAuthorized>
+                <MudButton Href="login" Color="Color.Inherit" data-testid="nav-login">Sign in</MudButton>
+                <MudButton Href="register" Color="Color.Inherit" data-testid="nav-register">Register</MudButton>
+            </NotAuthorized>
+        </AuthorizeView>
+    </MudAppBar>
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.Large" Class="my-6">
             @Body
-        </article>
-    </main>
-</div>
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private async Task SignOut()
+    {
+        await Auth.SignOutAsync();
+        Navigation.NavigateTo("/");
+    }
+}

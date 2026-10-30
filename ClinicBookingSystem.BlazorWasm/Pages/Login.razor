@@ -1,0 +1,55 @@
+@page "/login"
+@inject IClinicApi Api
+@inject JwtAuthStateProvider Auth
+@inject NavigationManager Navigation
+@inject FormValidator<LoginRequest> Validator
+
+<PageTitle>Sign in</PageTitle>
+
+<MudPaper Class="pa-6 mx-auto" MaxWidth="480px">
+    <MudText Typo="Typo.h5" GutterBottom="true">Sign in</MudText>
+    <MudForm Model="_model" @ref="_form" Validation="Validator.ValidateValue">
+        <MudTextField @bind-Value="_model.Email" For="() => _model.Email" Label="Email" InputType="InputType.Email"
+                      Immediate="true" data-testid="login-email" />
+        <MudTextField @bind-Value="_model.Password" For="() => _model.Password" Label="Password" InputType="InputType.Password"
+                      Immediate="true" data-testid="login-password" />
+    </MudForm>
+
+    @if (_error is not null)
+    {
+        <MudAlert Severity="Severity.Error" Class="mt-3" data-testid="login-error">@_error</MudAlert>
+    }
+
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Class="mt-4" Disabled="_busy"
+               OnClick="SubmitAsync" data-testid="login-submit">Sign in</MudButton>
+    <MudText Class="mt-3">No account? <MudLink Href="register">Register</MudLink></MudText>
+</MudPaper>
+
+@code {
+    private readonly LoginRequest _model = new();
+    private MudForm _form = default!;
+    private string? _error;
+    private bool _busy;
+
+    [SupplyParameterFromQuery] public string? ReturnUrl { get; set; }
+
+    private async Task SubmitAsync()
+    {
+        await _form.ValidateAsync();
+        if (!await Validator.IsValidAsync(_model)) return;
+
+        _busy = true;
+        _error = null;
+        var result = await Api.LoginAsync(_model);
+        _busy = false;
+
+        if (!result.IsSuccess) { _error = result.Error; return; }
+
+        await Auth.SignInAsync(result.Value!);
+        Navigation.NavigateTo(LandingPage(result.Value!.Roles));
+    }
+
+    // Patients go where they were heading; staff and admins have no booking pages, so they land on the management page.
+    private string LandingPage(IReadOnlyList<string> roles) =>
+        roles.Contains(Roles.Patient) ? (string.IsNullOrEmpty(ReturnUrl) ? "book" : ReturnUrl) : "manage";
+}

@@ -1,9 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+  <!-- Cross-module dependencies go through the other modules' Application layer (their commands and queries) only. -->
+  <ItemGroup>
+    <ProjectReference Include="..\ClinicBookingSystem.TimeSlots.Application\ClinicBookingSystem.TimeSlots.Application.csproj" />
+    <ProjectReference Include="..\ClinicBookingSystem.Clinics.Application\ClinicBookingSystem.Clinics.Application.csproj" />
+  </ItemGroup>
 
 </Project>
+

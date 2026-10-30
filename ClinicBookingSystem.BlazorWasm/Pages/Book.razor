@@ -1,0 +1,64 @@
+@page "/book"
+@attribute [Authorize(Roles = Roles.Patient)]
+@inject IClinicApi Api
+@inject ISnackbar Snackbar
+
+<PageTitle>Book an appointment</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">Book an appointment</MudText>
+
+@if (_confirmation is not null)
+{
+    <ConfirmationBanner Message="@_confirmation.Message" />
+    <MudButton Href="appointments" Variant="Variant.Outlined" Color="Color.Primary" Class="mr-2">View my appointments</MudButton>
+    <MudButton Variant="Variant.Text" OnClick="BookAnother" data-testid="book-another">Book another</MudButton>
+}
+else
+{
+    <SlotPicker @key="_pickerKey" SelectedSlotId="_selected?.Id" SelectedSlotChanged="s => { _selected = s; _error = null; }" />
+
+    @if (_error is not null)
+    {
+        <MudAlert Severity="Severity.Error" Class="my-4" data-testid="book-error">@_error</MudAlert>
+    }
+
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-4" Disabled="@(_selected is null || _busy)"
+               OnClick="BookAsync" data-testid="book-submit">Confirm booking</MudButton>
+}
+
+@code {
+    private TimeSlotDto? _selected;
+    private AppointmentConfirmationDto? _confirmation;
+    private string? _error;
+    private bool _busy;
+    private int _pickerKey;
+
+    private async Task BookAsync()
+    {
+        if (_selected is null) return;
+
+        _busy = true;
+        var result = await Api.BookAsync(_selected.Id);
+        _busy = false;
+
+        if (result.IsSuccess)
+        {
+            _confirmation = result.Value;
+            Snackbar.Add("Appointment confirmed", Severity.Success);
+            return;
+        }
+
+        // A conflict usually means the slot was just taken: refresh the list so the user can pick another.
+        _error = result.Error;
+        _selected = null;
+        _pickerKey++;
+    }
+
+    private void BookAnother()
+    {
+        _confirmation = null;
+        _selected = null;
+        _error = null;
+        _pickerKey++;
+    }
+}

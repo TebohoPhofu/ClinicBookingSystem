@@ -1,0 +1,11 @@
+@using ClinicBookingSystem.Contracts
+
+<MudCard Class="mb-3" data-testid="appointment-confirmation">
+    <MudCardContent>
+        <MudAlert Severity="Severity.Success" Variant="Variant.Filled" data-testid="confirmation-message">@Message</MudAlert>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [Parameter, EditorRequired] public string Message { get; set; } = string.Empty;
+}

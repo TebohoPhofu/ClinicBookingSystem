@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Runs the real API against a throw-away SQL Server container (Testcontainers), so migrations, the rowversion
+    concurrency token and the unique indexes are exercised exactly as in production. Requires Docker.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <NoWarn>$(NoWarn);xUnit1051</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <PackageReference Include="Testcontainers.MsSql" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ClinicBookingSystem.Api\ClinicBookingSystem.Api.csproj" />
+  </ItemGroup>
+
+</Project>

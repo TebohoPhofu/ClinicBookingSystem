@@ -1,0 +1,96 @@
+@page "/manage"
+@attribute [Authorize(Roles = $"{Roles.Admin},{Roles.ClinicStaff}")]
+@inject IClinicApi Api
+@inject ISnackbar Snackbar
+
+<PageTitle>Manage clinics</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">Manage clinics and time slots</MudText>
+
+<AuthorizeView Roles="@Roles.Admin">
+    <MudPaper Class="pa-4 mb-6">
+        <MudText Typo="Typo.h6" GutterBottom="true">Add a clinic</MudText>
+        <MudTextField @bind-Value="_clinicName" Label="Name" Immediate="true" data-testid="clinic-name" />
+        <MudTextField @bind-Value="_clinicAddress" Label="Address" Immediate="true" data-testid="clinic-address" />
+        <MudTextField @bind-Value="_clinicPhone" Label="Phone number" Immediate="true" data-testid="clinic-phone" />
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-3" Disabled="_busy" OnClick="CreateClinicAsync"
+                   data-testid="clinic-create">Add clinic</MudButton>
+    </MudPaper>
+</AuthorizeView>
+
+<MudPaper Class="pa-4">
+    <MudText Typo="Typo.h6" GutterBottom="true">Open time slots</MudText>
+    <MudSelect T="Guid?" @bind-Value="_clinicId" Label="Clinic" data-testid="manage-clinic-select">
+        @foreach (var clinic in _clinics)
+        {
+            <MudSelectItem T="Guid?" Value="@clinic.Id">@clinic.Name</MudSelectItem>
+        }
+    </MudSelect>
+    <MudDatePicker @bind-Date="_date" Label="Date" MinDate="DateTime.Today" data-testid="manage-date" />
+    <MudTimePicker @bind-Time="_opens" Label="Opens" data-testid="manage-opens" />
+    <MudTimePicker @bind-Time="_closes" Label="Closes" data-testid="manage-closes" />
+    <MudNumericField @bind-Value="_slotMinutes" Label="Slot length (minutes)" Min="5" Max="240" data-testid="manage-minutes" />
+
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-3" Disabled="@(_busy || _clinicId is null || _date is null)"
+               OnClick="GenerateAsync" data-testid="manage-generate">Open slots</MudButton>
+</MudPaper>
+
+@if (_error is not null)
+{
+    <MudAlert Severity="Severity.Error" Class="mt-4" data-testid="manage-error">@_error</MudAlert>
+}
+
+@code {
+    private IReadOnlyList<ClinicDto> _clinics = [];
+    private Guid? _clinicId;
+    private DateTime? _date = DateTime.Today.AddDays(1);
+    private TimeSpan? _opens = new(8, 0, 0);
+    private TimeSpan? _closes = new(16, 0, 0);
+    private int _slotMinutes = 30;
+    private string _clinicName = string.Empty;
+    private string _clinicAddress = string.Empty;
+    private string _clinicPhone = string.Empty;
+    private string? _error;
+    private bool _busy;
+
+    protected override async Task OnInitializedAsync() => await LoadClinicsAsync();
+
+    private async Task LoadClinicsAsync()
+    {
+        var result = await Api.GetClinicsAsync();
+        if (result.IsSuccess) _clinics = result.Value!;
+        else _error = result.Error;
+    }
+
+    private async Task CreateClinicAsync()
+    {
+        _busy = true;
+        _error = null;
+        var result = await Api.CreateClinicAsync(new CreateClinicRequest(_clinicName, _clinicAddress, _clinicPhone));
+        _busy = false;
+
+        if (!result.IsSuccess) { _error = result.Error; return; }
+
+        Snackbar.Add($"Clinic '{result.Value!.Name}' added", Severity.Success);
+        _clinicName = _clinicAddress = _clinicPhone = string.Empty;
+        await LoadClinicsAsync();
+    }
+
+    private async Task GenerateAsync()
+    {
+        _busy = true;
+        _error = null;
+
+        // Clinic hours are entered in clinic-local time.
+        var day = DateOnly.FromDateTime(_date!.Value);
+        var opensAt = new DateTimeOffset(day.ToDateTime(TimeOnly.FromTimeSpan(_opens ?? TimeSpan.Zero)), ClinicTime.Offset);
+        var closesAt = new DateTimeOffset(day.ToDateTime(TimeOnly.FromTimeSpan(_closes ?? TimeSpan.Zero)), ClinicTime.Offset);
+
+        var result = await Api.GenerateTimeSlotsAsync(new GenerateTimeSlotsRequest(_clinicId!.Value, opensAt, closesAt, _slotMinutes));
+        _busy = false;
+
+        if (!result.IsSuccess) { _error = result.Error; return; }
+
+        Snackbar.Add($"{result.Value!.Created} time slots opened", Severity.Success);
+    }
+}

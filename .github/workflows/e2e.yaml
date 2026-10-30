@@ -1,0 +1,99 @@
+name: E2E (Playwright)
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * *'   # nightly at 03:00 UTC
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_VERSION: '10.0.x'
+  SOLUTION: ClinicBookingSystem.slnx
+  E2E_WEB_URL: http://localhost:5271
+
+jobs:
+  e2e:
+    name: Playwright E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          cache: true
+          cache-dependency-path: |
+            **/*.csproj
+            *.slnx
+            Directory.Packages.props
+            Directory.Build.props
+
+      - name: Start the full stack
+        run: docker compose -f deploy/docker/docker-compose.yml up -d --build
+
+      - name: Wait for API
+        run: |
+          for i in $(seq 1 120); do
+            if curl -sf -o /dev/null http://localhost:5100/swagger/index.html; then
+              echo "API is up after $i attempts"
+              exit 0
+            fi
+            echo "Attempt $i: API not ready..."
+            sleep 10
+          done
+          echo "API did not start in time"
+          docker compose -f deploy/docker/docker-compose.yml logs --no-color
+          exit 1
+
+      - name: Wait for Web UI
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf -o /dev/null http://localhost:5271/; then
+              echo "Web UI is up after $i attempts"
+              exit 0
+            fi
+            echo "Attempt $i: Web UI not ready..."
+            sleep 5
+          done
+          exit 1
+
+      # The Playwright script lives under bin/Debug/net10.0 — build in Debug.
+      - name: Restore & build E2E project
+        run: |
+          dotnet restore ${{ env.SOLUTION }}
+          dotnet build ClinicBookingSystem.E2ETests/ClinicBookingSystem.E2ETests.csproj \
+            --configuration Debug --no-restore
+
+      - name: Install Playwright browsers
+        run: pwsh ClinicBookingSystem.E2ETests/bin/Debug/net10.0/playwright.ps1 install --with-deps chromium
+
+      - name: Run E2E tests
+        run: >
+          dotnet test
+          ClinicBookingSystem.E2ETests/ClinicBookingSystem.E2ETests.csproj
+          --configuration Debug --no-build
+          --logger "trx;LogFileName=e2e-tests.trx"
+          --results-directory TestResults
+
+      - name: Upload E2E test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-results
+          path: TestResults
+          retention-days: 7
+
+      - name: Dump stack logs on failure
+        if: failure()
+        run: docker compose -f deploy/docker/docker-compose.yml logs --no-color
+
+      - name: Tear down
+        if: always()
+        run: docker compose -f deploy/docker/docker-compose.yml down -v
