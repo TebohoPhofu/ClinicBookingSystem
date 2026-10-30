@@ -2,8 +2,6 @@ name: E2E (Playwright)
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '0 3 * * *'   # nightly at 03:00 UTC
 
 concurrency:
   group: e2e-${{ github.ref }}
@@ -17,15 +15,15 @@ env:
 jobs:
   e2e:
     name: Playwright E2E
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
           cache: true
@@ -79,16 +77,6 @@ jobs:
           dotnet test
           ClinicBookingSystem.E2ETests/ClinicBookingSystem.E2ETests.csproj
           --configuration Debug --no-build
-          --logger "trx;LogFileName=e2e-tests.trx"
-          --results-directory TestResults
-
-      - name: Upload E2E test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: e2e-test-results
-          path: TestResults
-          retention-days: 7
 
       - name: Dump stack logs on failure
         if: failure()

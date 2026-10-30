@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, master]
+    branches: [master]
   pull_request:
-    branches: [main, master]
+    branches: [master]
   workflow_dispatch:
 
 concurrency:
@@ -22,19 +22,19 @@ jobs:
   # ------------------------------------------------------------------
   # Build the whole solution, then run unit + integration tests.
   # Integration tests use Testcontainers, so Docker is required —
-  # ubuntu-latest ships it out of the box.
+  # ubuntu-24.04 ships it out of the box.
   # ------------------------------------------------------------------
   build-and-test:
     name: Build & Test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
           cache: true
@@ -55,34 +55,22 @@ jobs:
           dotnet test
           ClinicBookingSystem.UnitTests/ClinicBookingSystem.UnitTests.csproj
           --configuration Release --no-build
-          --logger "trx;LogFileName=unit-tests.trx"
-          --results-directory TestResults
 
       - name: Integration tests (Testcontainers + SQL Server)
         run: >
           dotnet test
           ClinicBookingSystem.IntegrationTests/ClinicBookingSystem.IntegrationTests.csproj
           --configuration Release --no-build
-          --logger "trx;LogFileName=integration-tests.trx"
-          --results-directory TestResults
-
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results
-          path: TestResults
-          retention-days: 7
 
   # ------------------------------------------------------------------
   # Build both Dockerfiles and push to GitHub Container Registry.
-  # Only runs on pushes to main so forks/PRs never touch the registry.
+  # Only runs on pushes to master so forks/PRs never touch the registry.
   # ------------------------------------------------------------------
   docker-publish:
     name: Publish Docker images
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: build-and-test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     timeout-minutes: 25
     permissions:
       contents: read
@@ -90,7 +78,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       # GHCR requires lowercase image names; github.repository preserves case.
       - name: Set lowercase image names
